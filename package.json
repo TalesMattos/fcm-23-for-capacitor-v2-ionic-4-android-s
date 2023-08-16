@@ -1,6 +1,6 @@
 {
   "name": "@talesmattos/fcm23-for-capacitor2-ionic4-androids-apps",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Brings Firebase Cloud Messaging features to Capacitor",
   "main": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",
