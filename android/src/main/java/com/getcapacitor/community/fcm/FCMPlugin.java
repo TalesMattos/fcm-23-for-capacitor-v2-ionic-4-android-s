@@ -5,7 +5,6 @@ import com.getcapacitor.NativePlugin;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
-import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.io.IOException;
@@ -53,29 +52,23 @@ public class FCMPlugin extends Plugin {
 
     @PluginMethod()
     public void deleteInstance(final PluginCall call) {
-        Runnable r = () -> {
-            try {
-                FirebaseInstanceId.getInstance().deleteInstanceId();
-                call.success();
-            } catch (IOException e) {
-                e.printStackTrace();
-                call.error("Cant delete Firebase Instance ID", e);
-            }
-        };
-
-        // Run in background thread since `deleteInstanceId()` is a blocking request.
-        // See https://firebase.google.com/docs/reference/android/com/google/firebase/iid/FirebaseInstanceId#deleteInstanceId()
-        new Thread(r).start();
+        FirebaseInstallations.getInstance().delete()
+                .addOnSuccessListener(aVoid -> call.resolve())
+                .addOnFailureListener(e -> {
+                    e.printStackTrace();
+                    call.reject("Cant delete Firebase Instance ID", e);
+                });
     }
 
     @PluginMethod()
     public void getToken(final PluginCall call) {
-        FirebaseInstanceId.getInstance().getInstanceId().addOnSuccessListener(getActivity(), instanceIdResult -> {
+        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(getActivity(), tokenResult -> {
             JSObject data = new JSObject();
-            data.put("token", instanceIdResult.getToken());
-            call.success(data);
+            data.put("token", tokenResult.getResult());
+            call.resolve(data);
         });
-        FirebaseInstanceId.getInstance().getInstanceId().addOnFailureListener(e -> call.error("Failed to get instance FirebaseID", e));
+
+        FirebaseMessaging.getInstance().getToken().addOnFailureListener(e -> call.reject("Failed to get FCM registration token", e));
     }
 
     @PluginMethod()
