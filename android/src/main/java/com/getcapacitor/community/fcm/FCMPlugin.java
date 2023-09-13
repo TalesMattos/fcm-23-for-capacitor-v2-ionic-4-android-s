@@ -1,5 +1,12 @@
 package com.getcapacitor.community.fcm;
 
+import android.Manifest;
+import android.os.Build;
+import android.content.pm.PackageManager;
+import android.util.Log;
+import androidx.core.content.ContextCompat;
+import androidx.core.app.ActivityCompat;
+
 import com.getcapacitor.JSObject;
 import com.getcapacitor.NativePlugin;
 import com.getcapacitor.Plugin;
@@ -63,6 +70,9 @@ public class FCMPlugin extends Plugin {
 
     @PluginMethod()
     public void getToken(final PluginCall call) {
+
+        this.requestPushNotificationPermission(call);
+
         FirebaseMessaging.getInstance().getToken().addOnCompleteListener(getActivity(), tokenResult -> {
             JSObject data = new JSObject();
             data.put("token", tokenResult.getResult());
@@ -81,9 +91,24 @@ public class FCMPlugin extends Plugin {
 
     @PluginMethod()
     public void isAutoInitEnabled(final PluginCall call) {
+
         final boolean enabled = FirebaseMessaging.getInstance().isAutoInitEnabled();
         JSObject data = new JSObject();
         data.put("enabled", enabled);
         call.success(data);
     }
+
+    @PluginMethod()
+    public void requestPushNotificationPermission(final PluginCall call) {
+
+        if (Build.VERSION.SDK_INT >= 33) {
+            Log.v("FCM_Request_Permission", "Requesting FCM Permission for Push Notification...");
+            if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                Log.v("FCM_Request_Permission", "NOT GRANTED YET: Asking via prompt...");
+                ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.POST_NOTIFICATIONS},101);
+            }
+        }
+    }
+
+
 }
